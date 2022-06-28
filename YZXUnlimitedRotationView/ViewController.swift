@@ -33,7 +33,7 @@ extension ViewController: YZXUnlimitedRotationViewDelegate {
     }
     
     func yzx_unlimitedRotationView(view: YZXUnlimitedRotationView, index: Int) -> UITableViewCell {
-        var cell = view.dequeueReusableCell(withReuseIdentifier: kCellIdentify, index: index)
+        var cell = view.dequeueReusableCell(withReuseIdentifier: kCellIdentify)
         if cell == nil {
             cell = UITableViewCell(style: .default, reuseIdentifier: kCellIdentify)
         }

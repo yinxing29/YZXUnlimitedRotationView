@@ -117,11 +117,14 @@ class YZXUnlimitedRotationView: UIView {
     
     //MARK: - 手势事件
     @objc func tap() {
+        if totalNumber == 0 {
+            return
+        }
         delegate?.yzx_unlimitedRotationView(view: self, didSelectedIndex: currentIndex)
     }
     
     @objc func pan(sender: UIPanGestureRecognizer) {
-        guard let currentView = centerView else {
+        guard let currentView = centerView, totalNumber > 0 else {
             return
         }
         
@@ -178,6 +181,8 @@ class YZXUnlimitedRotationView: UIView {
     
     //MARK: - 私有方法
     func reloadData() {
+        p_releaseTimer()
+        
         if delegate == nil {
             return
         }
@@ -265,7 +270,7 @@ class YZXUnlimitedRotationView: UIView {
             leftView = centerView
             centerView = rightView
             
-            if let nextView = delegate?.yzx_unlimitedRotationView(view: self, index: currentIndex) {
+            if let nextView = delegate?.yzx_unlimitedRotationView(view: self, index: (currentIndex + 1) % totalNumber) {
                 rightView = nextView
                 addSubview(nextView)
             }
@@ -293,7 +298,7 @@ class YZXUnlimitedRotationView: UIView {
             }
             rightView = centerView
             centerView = leftView
-            if let backView = delegate?.yzx_unlimitedRotationView(view: self, index: currentIndex) {
+            if let backView = delegate?.yzx_unlimitedRotationView(view: self, index: (currentIndex - 1 < 0 ? (totalNumber - 1) : (currentIndex - 1))) {
                 leftView = backView
                 addSubview(backView)
             }
@@ -343,7 +348,7 @@ class YZXUnlimitedRotationView: UIView {
     //MARK: - --------------------- 私有方法 END ---------------------
     
     //MARK: - 公用方法
-    func dequeueReusableCell(withReuseIdentifier identifier: String, index: Int) -> UITableViewCell? {
+    func dequeueReusableCell(withReuseIdentifier identifier: String) -> UITableViewCell? {
         if let index = cacheCells.firstIndex(where: { $0.reuseIdentifier == identifier }) {
             let cell = cacheCells[index]
             cacheCells.remove(at: index)
