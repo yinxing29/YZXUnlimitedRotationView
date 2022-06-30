@@ -10,8 +10,10 @@ import UIKit
 
 class YZXPageControl: UIStackView {
     
+    // 选中图片
     var activeImage: UIImage?
     
+    // 未选中图片
     var inactiveImage: UIImage?
     
     var currentPage = 0 {
@@ -42,11 +44,11 @@ class YZXPageControl: UIStackView {
     // 更新试图
     func updateDots() {
         if activeImage == nil {
-            activeImage = UIImage.image(color: .gray, size: CGSize(width: 8.0, height: 8.0), cornerRadius: 4.0)
+            activeImage = UIImage.image(color: .orange, size: CGSize(width: 8.0, height: 8.0), cornerRadius: 4.0)
         }
         
         if inactiveImage == nil {
-            inactiveImage = UIImage.image(color: .orange, size: CGSize(width: 8.0, height: 8.0), cornerRadius: 4.0)
+            inactiveImage = UIImage.image(color: .gray, size: CGSize(width: 8.0, height: 8.0), cornerRadius: 4.0)
         }
         
         arrangedSubviews.forEach( { $0.removeFromSuperview() } )
@@ -55,9 +57,9 @@ class YZXPageControl: UIStackView {
             let imageView = UIImageView(frame: .zero)
             if index == currentPage {
                 lastPage = currentPage
-                imageView.image = inactiveImage
-            }else {
                 imageView.image = activeImage
+            }else {
+                imageView.image = inactiveImage
             }
             addArrangedSubview(imageView)
         }
@@ -75,11 +77,11 @@ class YZXPageControl: UIStackView {
         }
         
         if let page = lastPage, page < arrangedSubviews.count, let imageView = arrangedSubviews[page] as? UIImageView {
-            imageView.image = activeImage
+            imageView.image = inactiveImage
         }
         
         if let imageView = arrangedSubviews[currentPage] as? UIImageView {
-            imageView.image = inactiveImage
+            imageView.image = activeImage
         }
         
         lastPage = currentPage

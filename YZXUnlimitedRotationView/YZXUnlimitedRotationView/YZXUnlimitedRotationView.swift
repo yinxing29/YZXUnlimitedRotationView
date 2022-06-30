@@ -41,10 +41,10 @@ class YZXUnlimitedRotationView: UIView {
     
     var pageType: YZXUnlimitedRotationViewPageType = .left
     
-    // pageControl图片
+    // pageControl选中图片
     var activeImage: UIImage?
     
-    // pageControl选中图片
+    // pageControl图片
     var inactiveImage: UIImage?
     //MARK: - --------------------- 公有属性 END ---------------------
     
