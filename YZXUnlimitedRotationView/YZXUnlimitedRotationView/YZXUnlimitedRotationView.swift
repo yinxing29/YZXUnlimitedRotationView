@@ -168,7 +168,7 @@ class YZXUnlimitedRotationView: UIView {
                 }
                 return
             }
-            if velocity.x > 0.0 {
+            if velocity.x >= 0.0 {
                 p_backScroll()
             }else {
                 p_nextScroll()
