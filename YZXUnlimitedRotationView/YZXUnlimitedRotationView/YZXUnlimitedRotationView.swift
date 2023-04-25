@@ -375,7 +375,7 @@ class YZXUnlimitedRotationView: UIView {
         }
         
         timer = Timer.scheduledTimer(timeInterval: autoScrollTimeInterval, target: self, selector: #selector(p_timer), userInfo: nil, repeats: true)
-        RunLoop.main.add(timer!, forMode: .default)
+        RunLoop.main.add(timer!, forMode: .common)
     }
     
     /// 销毁timer
