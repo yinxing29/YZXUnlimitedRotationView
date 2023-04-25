@@ -16,16 +16,19 @@ class YZXPageControl: UIStackView {
     // 未选中图片
     var inactiveImage: UIImage?
     
+    // 当前选中的page
     var currentPage = 0 {
         didSet {
             p_refreshUI()
         }
     }
     
+    // 总page数量
     var numberOfPages = 0
     
-    var lastPage: Int?
+    private var lastPage: Int?
     
+    // 添加到父视图时更新UI
     override func willMove(toSuperview newSuperview: UIView?) {
         updateDots()
     }
@@ -43,14 +46,16 @@ class YZXPageControl: UIStackView {
     
     // 更新试图
     func updateDots() {
+        // 设置默认图片
         if activeImage == nil {
-            activeImage = UIImage.image(color: .orange, size: CGSize(width: 8.0, height: 8.0), cornerRadius: 4.0)
+            activeImage = UIImage.yzx_image(color: .orange, size: CGSize(width: 8.0, height: 8.0), cornerRadius: 4.0)
         }
         
         if inactiveImage == nil {
-            inactiveImage = UIImage.image(color: .gray, size: CGSize(width: 8.0, height: 8.0), cornerRadius: 4.0)
+            inactiveImage = UIImage.yzx_image(color: .gray, size: CGSize(width: 8.0, height: 8.0), cornerRadius: 4.0)
         }
         
+        // 移除所有视图，重新布局
         arrangedSubviews.forEach( { $0.removeFromSuperview() } )
         
         for index in 0..<numberOfPages {
@@ -64,6 +69,7 @@ class YZXPageControl: UIStackView {
             addArrangedSubview(imageView)
         }
         
+        // 自适应宽度
         let imageWidth = max(activeImage?.size.width ?? 0.0, inactiveImage?.size.width ?? 0.0)
         let pageWidth = imageWidth * CGFloat(numberOfPages) + spacing * CGFloat(numberOfPages - 1)
         var rect = frame
@@ -71,6 +77,7 @@ class YZXPageControl: UIStackView {
         frame = rect
     }
     
+    /// 刷新选中page状态
     private func p_refreshUI() {
         guard currentPage < arrangedSubviews.count else {
             return
@@ -89,7 +96,8 @@ class YZXPageControl: UIStackView {
 }
 
 extension UIImage {
-    static func image(color: UIColor, size: CGSize, cornerRadius: CGFloat) -> UIImage? {
+    /// 生成纯色图片
+    static func yzx_image(color: UIColor, size: CGSize, cornerRadius: CGFloat) -> UIImage? {
         if size.width <= 0.0 || size.height <= 0.0 {
             return nil
         }

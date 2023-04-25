@@ -116,6 +116,7 @@ class YZXUnlimitedRotationView: UIView {
     //MARK: - --------------------- init END ---------------------
     
     //MARK: - 手势事件
+    /// 点击手势事件
     @objc func tap() {
         if totalNumber == 0 {
             return
@@ -123,6 +124,7 @@ class YZXUnlimitedRotationView: UIView {
         delegate?.yzx_unlimitedRotationView(view: self, didSelectedIndex: currentIndex)
     }
     
+    /// 拖拽手势事件
     @objc func pan(sender: UIPanGestureRecognizer) {
         guard let currentView = centerView, totalNumber > 0 else {
             return
@@ -137,6 +139,7 @@ class YZXUnlimitedRotationView: UIView {
         case .began:
             startPoint = point
             
+            // 如果自动滑动，销毁timer
             if isAutoScroll {
                 p_releaseTimer()
             }
@@ -149,6 +152,7 @@ class YZXUnlimitedRotationView: UIView {
             // 重置偏移量
             sender.setTranslation(.zero, in: self)
         case .ended:
+            // 快速滑动，直接切换视图
             if velocity.x > 500 {
                 p_backScroll()
                 return
@@ -157,17 +161,20 @@ class YZXUnlimitedRotationView: UIView {
                 return
             }
             
+            // 滑动超过视图的一半，切换视图
             let needScrollPage = (currentView.frame.origin.x >= contentWidth / 2.0 || currentView.frame.origin.x <= -contentWidth / 2.0)
             if !needScrollPage {
                 UIView.animate(withDuration: 0.3) {
                     self.p_resetLayout()
                 } completion: { finished in
+                    // 自动滑动开启，手势滑动结束，开启timer
                     if self.isAutoScroll {
                         self.p_createTimer()
                     }
                 }
                 return
             }
+            
             if velocity.x >= 0.0 {
                 p_backScroll()
             }else {
@@ -180,13 +187,16 @@ class YZXUnlimitedRotationView: UIView {
     //MARK: - --------------------- 手势事件 END ---------------------
     
     //MARK: - 私有方法
+    /// 刷新视图
     func reloadData() {
+        // 销毁旧timer，后续重新启动新timer
         p_releaseTimer()
         
         if delegate == nil {
             return
         }
         
+        // 获取视图总数量
         if let number = delegate?.yzx_unlimitedRotationNumbers(view: self) {
             totalNumber = number
         }
@@ -195,25 +205,30 @@ class YZXUnlimitedRotationView: UIView {
             return
         }
         
+        // 获取左边视图
         if let backView = delegate?.yzx_unlimitedRotationView(view: self, index: currentIndex - 1 < 0 ? (totalNumber - 1) : (currentIndex - 1)) {
             leftView = backView
             addSubview(backView)
         }
         
+        // 获取当前展示的视图
         if let currentView = delegate?.yzx_unlimitedRotationView(view: self, index: currentIndex) {
             centerView = currentView
             addSubview(currentView)
         }
         
+        // 获取右边视图
         if let nextView = delegate?.yzx_unlimitedRotationView(view: self, index: (currentIndex + 1) % totalNumber) {
             rightView = nextView
             addSubview(nextView)
         }
         
+        // 设置各视图位置
         leftView?.frame = CGRect(x: -contentWidth, y: 0.0, width: contentWidth, height: contentHeight)
         centerView?.frame = CGRect(x: 0.0, y: 0.0, width: contentWidth, height: contentHeight)
         rightView?.frame = CGRect(x: contentWidth, y: 0.0, width: contentWidth, height: contentHeight)
         
+        // 是否显示pageControl（pageControl默认高度为30.0）
         if isShowPageControl {
             contentHeight = bounds.size.height - 30.0
             pageControl.isHidden = !isShowPageControl
@@ -224,6 +239,7 @@ class YZXUnlimitedRotationView: UIView {
             pageControl.numberOfPages = totalNumber
             pageControl.currentPage = currentIndex
             pageControl.updateDots()
+            // 设置pageControl位置
             var center = pageControl.center
             if pageType == .center {
                 center.x = contentWidth / 2.0
@@ -237,11 +253,14 @@ class YZXUnlimitedRotationView: UIView {
             }
         }
         
+        // 自动滑动，启动timer
         if isAutoScroll {
             p_createTimer()
         }
     }
     
+    /// 手势滑动视图
+    /// - Parameter x: 手势x偏移量
     private func p_viewScroll(x: CGFloat) {
         var leftRect = leftView?.frame ?? .zero
         var centerRect = centerView?.frame ?? .zero
@@ -256,76 +275,98 @@ class YZXUnlimitedRotationView: UIView {
         rightView?.frame = righRect
     }
     
+    /// 滑动到下一个视图
     private func p_nextScroll() {
+        // 获取下一个视图的index
         currentIndex = (currentIndex + 1) % totalNumber
         UIView.animate(withDuration: 0.3) { [self] in
+            // 将左中右三个视图向左移动一个视图宽度，将右边视图显示出来
             leftView?.frame = CGRect(x: -contentWidth * 2.0, y: 0.0, width: contentWidth, height: contentHeight)
             centerView?.frame = CGRect(x: -contentWidth, y: 0.0, width: contentWidth, height: contentHeight)
             rightView?.frame = CGRect(x: 0.0, y: 0.0, width: contentWidth, height: contentHeight)
         } completion: { [self] finished in
+            // 左边视图存在，则将其放入缓存数组，并移除
             if let backView = leftView {
-                p_AddToCache(cell: backView)
+                p_addToCache(cell: backView)
                 backView.removeFromSuperview()
             }
+            
+            // 将之前的centerView赋值给leftView，rightView赋值给centerView（保持centerView为中间展示的视图）
             leftView = centerView
             centerView = rightView
             
+            // 获取新的右边视图
             if let nextView = delegate?.yzx_unlimitedRotationView(view: self, index: (currentIndex + 1) % totalNumber) {
                 rightView = nextView
                 addSubview(nextView)
             }
             
             pageControl.currentPage = currentIndex
-
+            
+            // 重新设置各视图的frame（主要设置新获取的rightView）
             p_resetLayout()
             
+            // 自动滑动开启，启动timer
             if timer == nil && isAutoScroll {
                 p_createTimer()
             }
         }
     }
     
+    /// 滑动到上一个试图
     private func p_backScroll() {
+        // 获取上一个视图的index
         currentIndex = (currentIndex - 1 < 0 ? (totalNumber - 1) : (currentIndex - 1))
         UIView.animate(withDuration: 0.3) { [self] in
+            // 将左中右三个视图向右移动一个视图宽度，将左边视图显示出来
             leftView?.frame = CGRect(x: 0.0, y: 0.0, width: contentWidth, height: contentHeight)
             centerView?.frame = CGRect(x: contentWidth, y: 0.0, width: contentWidth, height: contentHeight)
             rightView?.frame = CGRect(x: contentWidth * 2.0, y: 0.0, width: contentWidth, height: contentHeight)
         } completion: { [self] finished in
+            // 右边视图存在，则将其放入缓存数组，并移除
             if let nextView = rightView {
-                p_AddToCache(cell: nextView)
+                p_addToCache(cell: nextView)
                 nextView.removeFromSuperview()
             }
+            
+            // 将之前的centerView赋值给rightView，leftView赋值给centerView（保持centerView为中间展示的视图）
             rightView = centerView
             centerView = leftView
+            
+            // 获取新的左边视图
             if let backView = delegate?.yzx_unlimitedRotationView(view: self, index: (currentIndex - 1 < 0 ? (totalNumber - 1) : (currentIndex - 1))) {
                 leftView = backView
                 addSubview(backView)
             }
             
             pageControl.currentPage = currentIndex
-
+            
+            // 重新设置各视图的frame（主要设置新获取的rightView）
             p_resetLayout()
             
+            // 自动滑动开启，启动timer
             if timer == nil && isAutoScroll {
                 p_createTimer()
             }
         }
     }
     
+    /// 重置视图位置
     private func p_resetLayout() {
         leftView?.frame = CGRect(x: -contentWidth, y: 0.0, width: contentWidth, height: contentHeight)
         centerView?.frame = CGRect(x: 0.0, y: 0.0, width: contentWidth, height: contentHeight)
         rightView?.frame = CGRect(x: contentWidth, y: 0.0, width: contentWidth, height: contentHeight)
     }
     
-    private func p_AddToCache(cell: UITableViewCell) {
+    /// 添加视图缓存
+    private func p_addToCache(cell: UITableViewCell) {
         if cacheCells.contains(where: { $0.reuseIdentifier == cell.reuseIdentifier }) {
             return
         }
         cacheCells.append(cell)
     }
     
+    /// 启动timer
     private func p_createTimer() {
         p_resetLayout()
         
@@ -337,11 +378,13 @@ class YZXUnlimitedRotationView: UIView {
         RunLoop.main.add(timer!, forMode: .default)
     }
     
+    /// 销毁timer
     private func p_releaseTimer() {
         timer?.invalidate()
         timer = nil
     }
     
+    /// timer事件
     @objc func p_timer() {
         p_nextScroll()
     }
@@ -359,6 +402,7 @@ class YZXUnlimitedRotationView: UIView {
     //MARK: - --------------------- 公用方法 END ---------------------
 }
 
+/// 处理嵌套到ScrollView上出现手势冲突的问题
 extension YZXUnlimitedRotationView: UIGestureRecognizerDelegate {
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
         return true
