@@ -40,7 +40,6 @@ class YZXPageControl: UIStackView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         axis = .horizontal
-        spacing = 8.0
         alignment = .center
     }
     
@@ -54,6 +53,9 @@ class YZXPageControl: UIStackView {
         if inactiveImage == nil {
             inactiveImage = UIImage.yzx_image(color: .gray, size: CGSize(width: 8.0, height: 8.0), cornerRadius: 4.0)
         }
+        
+        // page间隔为图片宽度
+        spacing = min(activeImage!.size.width, inactiveImage!.size.width)
         
         // 移除所有视图，重新布局
         arrangedSubviews.forEach( { $0.removeFromSuperview() } )

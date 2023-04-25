@@ -41,6 +41,9 @@ class YZXUnlimitedRotationView: UIView {
     
     var pageType: YZXUnlimitedRotationViewPageType = .left
     
+    // pageControl高度
+    var pageControlHeight = 30.0
+    
     // pageControl选中图片
     var activeImage: UIImage?
     
@@ -92,7 +95,7 @@ class YZXUnlimitedRotationView: UIView {
         
         if isFirstLayout {
             contentWidth = bounds.size.width
-            contentHeight = bounds.size.height - (isShowPageControl ? 30.0 : 0.0)
+            contentHeight = bounds.size.height - (isShowPageControl ? pageControlHeight : 0.0)
             reloadData()
             isFirstLayout = false
         }
@@ -230,10 +233,10 @@ class YZXUnlimitedRotationView: UIView {
         
         // 是否显示pageControl（pageControl默认高度为30.0）
         if isShowPageControl {
-            contentHeight = bounds.size.height - 30.0
+            contentHeight = bounds.size.height - pageControlHeight
             pageControl.isHidden = !isShowPageControl
             
-            pageControl.frame = CGRect(x: 0.0, y: contentHeight, width: 100, height: 30.0)
+            pageControl.frame = CGRect(x: 0.0, y: contentHeight, width: 100, height: pageControlHeight)
             pageControl.activeImage = activeImage
             pageControl.inactiveImage = inactiveImage
             pageControl.numberOfPages = totalNumber
