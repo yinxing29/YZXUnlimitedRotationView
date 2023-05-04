@@ -13,6 +13,7 @@
 		0404E80F286AA28A0055C49D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0404E80E286AA28A0055C49D /* Assets.xcassets */; };
 		0404E812286AA28A0055C49D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 0404E810286AA28A0055C49D /* LaunchScreen.storyboard */; };
 		0404E81B286AA3720055C49D /* YZXUnlimitedRotationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0404E81A286AA3720055C49D /* YZXUnlimitedRotationView.swift */; };
+		040D481B2A03BA8300D51CB1 /* YZXUnlimitedRotationViewCenterOutExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 040D481A2A03BA8200D51CB1 /* YZXUnlimitedRotationViewCenterOutExtension.swift */; };
 		04EF97C7286AFA90002F73C3 /* YZXPageControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04EF97C6286AFA90002F73C3 /* YZXPageControl.swift */; };
 /* End PBXBuildFile section */
 
@@ -25,6 +26,7 @@
 		0404E811286AA28A0055C49D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		0404E813286AA28A0055C49D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		0404E81A286AA3720055C49D /* YZXUnlimitedRotationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YZXUnlimitedRotationView.swift; sourceTree = "<group>"; };
+		040D481A2A03BA8200D51CB1 /* YZXUnlimitedRotationViewCenterOutExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = YZXUnlimitedRotationViewCenterOutExtension.swift; sourceTree = "<group>"; };
 		04EF97C6286AFA90002F73C3 /* YZXPageControl.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = YZXPageControl.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -73,6 +75,7 @@
 			isa = PBXGroup;
 			children = (
 				0404E81A286AA3720055C49D /* YZXUnlimitedRotationView.swift */,
+				040D481A2A03BA8200D51CB1 /* YZXUnlimitedRotationViewCenterOutExtension.swift */,
 				04EF97C6286AFA90002F73C3 /* YZXPageControl.swift */,
 			);
 			path = YZXUnlimitedRotationView;
@@ -150,6 +153,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				0404E80A286AA2890055C49D /* ViewController.swift in Sources */,
+				040D481B2A03BA8300D51CB1 /* YZXUnlimitedRotationViewCenterOutExtension.swift in Sources */,
 				0404E806286AA2890055C49D /* AppDelegate.swift in Sources */,
 				04EF97C7286AFA90002F73C3 /* YZXPageControl.swift in Sources */,
 				0404E81B286AA3720055C49D /* YZXUnlimitedRotationView.swift in Sources */,

@@ -23,6 +23,10 @@ class ViewController: UIViewController {
         rotationView.delegate = self
         rotationView.isShowPageControl = true
         rotationView.pageType = .left
+        rotationView.isAutoScroll = true
+        rotationView.isRotation = true
+        rotationView.isStackCard = true
+        rotationView.viewType = .centerOut
         view.addSubview(rotationView)
     }
 }

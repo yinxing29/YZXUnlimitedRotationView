@@ -14,17 +14,39 @@ enum YZXUnlimitedRotationViewPageType {
     case right
 }
 
+enum YZXUnlimitedRotationViewType {
+    case `default` // 默认滑动翻页样式
+    case centerOut // 中间突出样式
+}
+
 protocol YZXUnlimitedRotationViewDelegate: NSObjectProtocol {
+    /// 轮播内容数量
     func yzx_unlimitedRotationNumbers(view: YZXUnlimitedRotationView) -> Int
     
+    /// 轮播内容
     func yzx_unlimitedRotationView(view: YZXUnlimitedRotationView, index: Int) -> UITableViewCell
     
+    /// 点击内容
     func yzx_unlimitedRotationView(view: YZXUnlimitedRotationView, didSelectedIndex index: Int) -> Void
+    
+    /// 左右cell和中间cell的水平间距（viewType == centerOut时才有效）
+    func yzx_unlimitedRotationViewHorizontalSpacing(swipe: YZXUnlimitedRotationView) -> CGFloat?
+    
+    /// 左右cell和中间cell的垂直间距（viewType == centerOut时才有效）
+    func yzx_unlimitedRotationViewVerticalSpacing(swipe: YZXUnlimitedRotationView) -> CGFloat?
 }
 
 extension YZXUnlimitedRotationViewDelegate {
     func yzx_unlimitedRotationView(view: YZXUnlimitedRotationView, didSelectedIndex index: Int) -> Void {
         
+    }
+    
+    func yzx_unlimitedRotationViewHorizontalSpacing(swipe: YZXUnlimitedRotationView) -> CGFloat? {
+        return 10.0
+    }
+    
+    func yzx_unlimitedRotationViewVerticalSpacing(swipe: YZXUnlimitedRotationView) -> CGFloat? {
+        return 5.0
     }
 }
 
@@ -33,6 +55,7 @@ class YZXUnlimitedRotationView: UIView {
     //MARK: - 公有属性
     weak var delegate: YZXUnlimitedRotationViewDelegate?
     
+    /// 自动轮播（viewType == .centerOut是，只有当isRotation = true是才可以自动轮博）
     var isAutoScroll = true
     
     var autoScrollTimeInterval = 2.0
@@ -41,38 +64,126 @@ class YZXUnlimitedRotationView: UIView {
     
     var pageType: YZXUnlimitedRotationViewPageType = .left
     
-    // pageControl高度
+    /// pageControl高度
     var pageControlHeight = 30.0
     
-    // pageControl选中图片
+    /// pageControl选中图片
     var activeImage: UIImage?
     
-    // pageControl图片
+    /// pageControl图片
     var inactiveImage: UIImage?
+    
+    /// 页面样式
+    var viewType = YZXUnlimitedRotationViewType.default {
+        didSet {
+            if viewType == .centerOut {
+                for ges in (gestureRecognizers ?? []) {
+                    if ges.isKind(of: UIPanGestureRecognizer.self) {
+                        removeGestureRecognizer(ges)
+                    }
+                }
+                
+                let swipe = UISwipeGestureRecognizer(target: self, action: #selector(swipe(sender:)))
+                swipe.direction = .left
+                addGestureRecognizer(swipe)
+                
+                let swipeRight = UISwipeGestureRecognizer(target: self, action: #selector(swipe(sender:)))
+                swipeRight.direction = .right
+                addGestureRecognizer(swipeRight)
+            }else {
+                var hasPan = false
+                for ges in (gestureRecognizers ?? []) {
+                    if ges.isKind(of: UISwipeGestureRecognizer.self) {
+                        removeGestureRecognizer(ges)
+                    }else if (ges.isKind(of: UIPanGestureRecognizer.self)) {
+                        hasPan = true
+                    }
+                }
+                
+                if !hasPan {
+                    let pan = UIPanGestureRecognizer(target: self, action: #selector(pan(sender:)))
+                    pan.delegate = self
+                    addGestureRecognizer(pan)
+                }
+            }
+        }
+    }
+    
+    /// viewType == centerOut时，背部视图透明度控制
+    var isStackCard = false
+    
+    /// viewType == centerOut时，是否可以轮播
+    var isRotation = true
     //MARK: - --------------------- 公有属性 END ---------------------
     
     //MARK: - 私有属性
-    private var leftView: UITableViewCell?
+    // 已经划动到边界外的一个view（viewType == centerOut使用）
+    var viewRemove: UITableViewCell?
     
-    private var centerView: UITableViewCell?
+    var leftView: UITableViewCell? {
+        didSet {
+            if let contentView = leftView?.contentView {
+                contentView.autoresizingMask = [.flexibleLeftMargin, .flexibleWidth, .flexibleRightMargin, .flexibleTopMargin, .flexibleHeight, .flexibleBottomMargin]
+                for view in contentView.subviews {
+                    view.autoresizingMask = [.flexibleLeftMargin, .flexibleWidth, .flexibleRightMargin, .flexibleTopMargin, .flexibleHeight, .flexibleBottomMargin]
+                }
+            }
+        }
+    }
     
-    private var rightView: UITableViewCell?
+    var centerView: UITableViewCell? {
+        didSet {
+            if let contentView = centerView?.contentView, viewType == .centerOut {
+                contentView.autoresizingMask = [.flexibleLeftMargin, .flexibleWidth, .flexibleRightMargin, .flexibleTopMargin, .flexibleHeight, .flexibleBottomMargin]
+                for view in contentView.subviews {
+                    view.autoresizingMask = [.flexibleLeftMargin, .flexibleWidth, .flexibleRightMargin, .flexibleTopMargin, .flexibleHeight, .flexibleBottomMargin]
+                }
+            }
+            
+            if let gestures = centerView?.gestureRecognizers, !gestures.isEmpty {
+                for gesture in gestures {
+                    if gesture.isKind(of: UITapGestureRecognizer.self) {
+                        return
+                    }
+                }
+            }
+            
+            let tap = UITapGestureRecognizer(target: self, action: #selector(tap))
+            centerView?.contentView.addGestureRecognizer(tap)
+        }
+    }
     
-    private var contentWidth: CGFloat = 0.0
+    var rightView: UITableViewCell? {
+        didSet {
+            if let contentView = rightView?.contentView, viewType == .centerOut {
+                contentView.autoresizingMask = [.flexibleLeftMargin, .flexibleWidth, .flexibleRightMargin, .flexibleTopMargin, .flexibleHeight, .flexibleBottomMargin]
+                for view in contentView.subviews {
+                    view.autoresizingMask = [.flexibleLeftMargin, .flexibleWidth, .flexibleRightMargin, .flexibleTopMargin, .flexibleHeight, .flexibleBottomMargin]
+                }
+            }
+        }
+    }
     
-    private var contentHeight: CGFloat = 0.0
+    // 左右cell和中间cell的水平间距
+    var horizontalSpacing: CGFloat = 0.0
+    // 左右cell和中间cell的垂直间距
+    var verticalSpacing: CGFloat = 0.0
     
-    private var totalNumber = 0
+    var contentWidth: CGFloat = 0.0
     
-    private var currentIndex = 0
+    var contentHeight: CGFloat = 0.0
     
-    private var isFirstLayout = true
+    var totalNumber = 0
     
-    private var cacheCells = [UITableViewCell]()
+    var currentIndex = 0
     
-    private var timer: Timer?
+    var isFirstLayout = true
     
-    private var pageControl: YZXPageControl = {
+    var cacheCells = [UITableViewCell]()
+    
+    var timer: Timer?
+    
+    var pageControl: YZXPageControl = {
         let view = YZXPageControl(frame: .zero)
         return view
     }()
@@ -112,15 +223,29 @@ class YZXUnlimitedRotationView: UIView {
         let pan = UIPanGestureRecognizer(target: self, action: #selector(pan(sender:)))
         pan.delegate = self
         addGestureRecognizer(pan)
-        
-        let tap = UITapGestureRecognizer(target: self, action: #selector(tap))
-        addGestureRecognizer(tap)
     }
     //MARK: - --------------------- init END ---------------------
     
     //MARK: - 手势事件
+    @objc private func swipe(sender: UISwipeGestureRecognizer) {
+        guard totalNumber > 0 else {
+            return
+        }
+        
+        // 如果自动滑动，销毁timer
+        if isAutoScroll {
+            p_releaseTimer()
+        }
+        
+        if sender.direction == .left {
+            p_nextScroll()
+        }else {
+            p_backScroll()
+        }
+    }
+    
     /// 点击手势事件
-    @objc func tap() {
+    @objc private func tap() {
         if totalNumber == 0 {
             return
         }
@@ -128,7 +253,7 @@ class YZXUnlimitedRotationView: UIView {
     }
     
     /// 拖拽手势事件
-    @objc func pan(sender: UIPanGestureRecognizer) {
+    @objc private func pan(sender: UIPanGestureRecognizer) {
         guard let currentView = centerView, totalNumber > 0 else {
             return
         }
@@ -192,6 +317,16 @@ class YZXUnlimitedRotationView: UIView {
     //MARK: - 私有方法
     /// 刷新视图
     func reloadData() {
+        centerView?.removeFromSuperview()
+        leftView?.removeFromSuperview()
+        rightView?.removeFromSuperview()
+        viewRemove?.removeFromSuperview()
+        centerView = nil
+        leftView = nil
+        rightView = nil
+        viewRemove = nil
+        cacheCells.removeAll()
+        
         // 销毁旧timer，后续重新启动新timer
         p_releaseTimer()
         
@@ -214,22 +349,17 @@ class YZXUnlimitedRotationView: UIView {
             addSubview(backView)
         }
         
-        // 获取当前展示的视图
-        if let currentView = delegate?.yzx_unlimitedRotationView(view: self, index: currentIndex) {
-            centerView = currentView
-            addSubview(currentView)
-        }
-        
         // 获取右边视图
         if let nextView = delegate?.yzx_unlimitedRotationView(view: self, index: (currentIndex + 1) % totalNumber) {
             rightView = nextView
             addSubview(nextView)
         }
         
-        // 设置各视图位置
-        leftView?.frame = CGRect(x: -contentWidth, y: 0.0, width: contentWidth, height: contentHeight)
-        centerView?.frame = CGRect(x: 0.0, y: 0.0, width: contentWidth, height: contentHeight)
-        rightView?.frame = CGRect(x: contentWidth, y: 0.0, width: contentWidth, height: contentHeight)
+        // 获取当前展示的视图
+        if let currentView = delegate?.yzx_unlimitedRotationView(view: self, index: currentIndex) {
+            centerView = currentView
+            addSubview(currentView)
+        }
         
         // 是否显示pageControl（pageControl默认高度为30.0）
         if isShowPageControl {
@@ -256,9 +386,18 @@ class YZXUnlimitedRotationView: UIView {
             }
         }
         
-        // 自动滑动，启动timer
-        if isAutoScroll {
-            p_createTimer()
+        if viewType == .centerOut {
+            p_centerOutReloadData()
+        }else {
+            // 设置各视图位置
+            leftView?.frame = CGRect(x: -contentWidth, y: 0.0, width: contentWidth, height: contentHeight)
+            centerView?.frame = CGRect(x: 0.0, y: 0.0, width: contentWidth, height: contentHeight)
+            rightView?.frame = CGRect(x: contentWidth, y: 0.0, width: contentWidth, height: contentHeight)
+            
+            // 自动滑动，启动timer
+            if isAutoScroll {
+                p_createTimer()
+            }
         }
     }
     
@@ -280,6 +419,11 @@ class YZXUnlimitedRotationView: UIView {
     
     /// 滑动到下一个视图
     private func p_nextScroll() {
+        if viewType == .centerOut {
+            p_centerOutNextScroll()
+            return
+        }
+        
         // 获取下一个视图的index
         currentIndex = (currentIndex + 1) % totalNumber
         UIView.animate(withDuration: 0.3) { [self] in
@@ -318,6 +462,11 @@ class YZXUnlimitedRotationView: UIView {
     
     /// 滑动到上一个试图
     private func p_backScroll() {
+        if viewType == .centerOut {
+            p_centerOutBackScroll()
+            return
+        }
+        
         // 获取上一个视图的index
         currentIndex = (currentIndex - 1 < 0 ? (totalNumber - 1) : (currentIndex - 1))
         UIView.animate(withDuration: 0.3) { [self] in
@@ -354,8 +503,12 @@ class YZXUnlimitedRotationView: UIView {
         }
     }
     
-    /// 重置视图位置
+    /// 重置视图位置（viewType == default）
     private func p_resetLayout() {
+        if viewType == .centerOut {
+            return
+        }
+        
         leftView?.frame = CGRect(x: -contentWidth, y: 0.0, width: contentWidth, height: contentHeight)
         centerView?.frame = CGRect(x: 0.0, y: 0.0, width: contentWidth, height: contentHeight)
         rightView?.frame = CGRect(x: contentWidth, y: 0.0, width: contentWidth, height: contentHeight)
@@ -370,7 +523,7 @@ class YZXUnlimitedRotationView: UIView {
     }
     
     /// 启动timer
-    private func p_createTimer() {
+    func p_createTimer() {
         p_resetLayout()
         
         if totalNumber == 0 {
@@ -390,6 +543,13 @@ class YZXUnlimitedRotationView: UIView {
     /// timer事件
     @objc func p_timer() {
         p_nextScroll()
+    }
+    
+    func p_isNeedAddToCache(cell: UITableViewCell) -> Bool {
+        if cacheCells.contains(where: { $0.reuseIdentifier == cell.reuseIdentifier }) {
+            return false
+        }
+        return true
     }
     //MARK: - --------------------- 私有方法 END ---------------------
     
